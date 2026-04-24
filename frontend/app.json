@@ -28,7 +28,7 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": ["expo-image-picker"],
+    "plugins": ["expo-image-picker", "expo-clipboard"],
     "extra": {
       "eas": {
         "projectId": "your-eas-project-id"

@@ -9,13 +9,12 @@ These tests focus on the Korean language fix:
 - Hashtag regex in _build_prompt output examples covers Korean Unicode range
 """
 
-import re
 import sys
 import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from main import _contains_korean, _build_prompt
+from main import _contains_korean, _build_prompt, _HASHTAG_PATTERN
 
 
 # ---------------------------------------------------------------------------
@@ -80,18 +79,15 @@ def test_build_prompt_english_keywords_preserved():
 
 
 # ---------------------------------------------------------------------------
-# Hashtag regex covers Korean Unicode range
+# Hashtag pattern covers Korean Unicode range
 # ---------------------------------------------------------------------------
-def test_regex_matches_korean_hashtag():
-    pattern = r"#[\w\uAC00-\uD7A3\u1100-\u11FF\u3130-\u318F]+"
-    result = "#여행 #감성사진 #daily"
-    tags = re.findall(pattern, result)
+def test_hashtag_pattern_matches_korean():
+    tags = _HASHTAG_PATTERN.findall("#여행 #감성사진 #daily")
     assert "#여행" in tags
     assert "#감성사진" in tags
     assert "#daily" in tags
 
 
-def test_regex_does_not_match_lone_hash():
-    pattern = r"#[\w\uAC00-\uD7A3\u1100-\u11FF\u3130-\u318F]+"
-    tags = re.findall(pattern, "# not a tag")
+def test_hashtag_pattern_does_not_match_lone_hash():
+    tags = _HASHTAG_PATTERN.findall("# not a tag")
     assert len(tags) == 0

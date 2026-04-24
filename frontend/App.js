@@ -11,7 +11,6 @@ import React, { useState, useRef } from "react";
 import {
   Alert,
   Animated,
-  Clipboard,
   Dimensions,
   Image,
   KeyboardAvoidingView,
@@ -26,6 +25,7 @@ import {
   View,
   ActivityIndicator,
 } from "react-native";
+import * as Clipboard from "expo-clipboard";
 import * as ImagePicker from "expo-image-picker";
 
 // ---------------------------------------------------------------------------
@@ -209,10 +209,10 @@ export default function App() {
   // ------------------------------------------------------------------
   // Copy to clipboard
   // ------------------------------------------------------------------
-  const copyAll = () => {
+  const copyAll = async () => {
     if (hashtags.length === 0) return;
     const text = hashtags.join(" ");
-    Clipboard.setString(text);
+    await Clipboard.setStringAsync(text);
     showToast("해시태그가 복사되었습니다!");
     triggerConfetti();
   };
@@ -306,8 +306,8 @@ export default function App() {
                 <TouchableOpacity
                   key={idx}
                   style={styles.tagChip}
-                  onPress={() => {
-                    Clipboard.setString(tag);
+                  onPress={async () => {
+                    await Clipboard.setStringAsync(tag);
                     showToast(`${tag} 복사됨`);
                   }}
                 >

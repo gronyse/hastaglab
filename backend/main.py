@@ -58,11 +58,21 @@ def get_openai_client() -> openai.OpenAI:
 
 
 # ---------------------------------------------------------------------------
+# Korean Unicode range – shared by language detection and hashtag extraction
+# ---------------------------------------------------------------------------
+# Covers Hangul syllables (AC00–D7A3), Jamo (1100–11FF), and
+# Compatibility Jamo (3130–318F).
+_KOREAN_RANGE = r"\uAC00-\uD7A3\u1100-\u11FF\u3130-\u318F"
+_KOREAN_PATTERN = re.compile(rf"[{_KOREAN_RANGE}]")
+_HASHTAG_PATTERN = re.compile(rf"#[\w{_KOREAN_RANGE}]+")
+
+
+# ---------------------------------------------------------------------------
 # Language helpers
 # ---------------------------------------------------------------------------
 def _contains_korean(text: str) -> bool:
     """Return True if *text* contains at least one Korean character."""
-    return bool(re.search(r"[\uAC00-\uD7A3\u1100-\u11FF\u3130-\u318F]", text))
+    return bool(_KOREAN_PATTERN.search(text))
 
 
 def _build_prompt(keywords: str) -> str:
@@ -155,7 +165,7 @@ async def generate_hashtags(
                             "type": "image_url",
                             "image_url": {
                                 "url": f"data:{content_type};base64,{b64_image}",
-                                "detail": "low",   # saves tokens while keeping accuracy
+                                "detail": "low",  # saves tokens while keeping accuracy
                             },
                         },
                         {"type": "text", "text": prompt},
@@ -183,7 +193,7 @@ async def generate_hashtags(
 
     # ---- extract hashtags from response ---------------------------------
     # Accept tags with Korean, Japanese, English, numbers, and underscores
-    hashtags = re.findall(r"#[\w\uAC00-\uD7A3\u1100-\u11FF\u3130-\u318F]+", raw_output)
+    hashtags = _HASHTAG_PATTERN.findall(raw_output)
 
     if not hashtags:
         # Fallback: split by whitespace and filter lines starting with #
