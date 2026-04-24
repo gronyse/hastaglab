@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+.eggs/
+venv/
+.venv/
+*.env
+!.env.example
+
+# Node / Expo
+node_modules/
+.expo/
+.expo-shared/
+frontend/.env
+dist/
+web-build/
+
+# EAS / Expo build artifacts
+*.aab
+*.apk
+*.ipa
+
+# macOS
+.DS_Store
