@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>해시태그 연구소 🔬</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 24px;
+      padding: 40px;
+      max-width: 680px;
+      width: 100%;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.18);
+    }
+
+    h1 { text-align: center; font-size: 1.9em; color: #333; }
+    .subtitle { text-align: center; color: #888; margin: 8px 0 28px; font-size: 0.95em; }
+
+    textarea {
+      width: 100%;
+      height: 140px;
+      padding: 14px;
+      border: 2px solid #e0e0e0;
+      border-radius: 14px;
+      font-size: 1em;
+      resize: vertical;
+      outline: none;
+      font-family: inherit;
+      transition: border-color 0.25s;
+    }
+    textarea:focus { border-color: #667eea; }
+
+    .hint { font-size: 0.8em; color: #aaa; margin-top: 6px; }
+
+    .btn-main {
+      width: 100%;
+      padding: 15px;
+      margin-top: 16px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: #fff;
+      border: none;
+      border-radius: 14px;
+      font-size: 1.1em;
+      font-weight: bold;
+      cursor: pointer;
+      transition: opacity 0.25s, transform 0.1s;
+    }
+    .btn-main:hover { opacity: 0.88; }
+    .btn-main:active { transform: scale(0.98); }
+    .btn-main:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    /* 로딩 */
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 22px 0;
+      color: #777;
+    }
+    .spinner {
+      display: inline-block;
+      width: 32px; height: 32px;
+      border: 3px solid #eee;
+      border-top-color: #667eea;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 10px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* 에러 */
+    .error {
+      display: none;
+      color: #e53935;
+      background: #fdecea;
+      border-radius: 10px;
+      padding: 12px;
+      margin-top: 16px;
+      text-align: center;
+    }
+
+    /* 결과 */
+    .result { display: none; margin-top: 28px; }
+    .result-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+    .result-title { font-weight: bold; font-size: 1.05em; color: #333; }
+
+    .btn-copy-all {
+      padding: 7px 14px;
+      background: #f3f3f3;
+      color: #555;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.85em;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-copy-all:hover { background: #e8e8e8; }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .tag {
+      background: linear-gradient(135deg, #667eea18, #764ba218);
+      border: 1.5px solid #667eea50;
+      color: #5a4fcf;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.9em;
+      cursor: pointer;
+      transition: all 0.2s;
+      user-select: none;
+    }
+    .tag:hover {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: #fff;
+      border-color: transparent;
+    }
+    .tag.copied { background: #43a047; color: #fff; border-color: transparent; }
+
+    /* 토스트 알림 */
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: #333;
+      color: #fff;
+      padding: 11px 22px;
+      border-radius: 25px;
+      font-size: 0.9em;
+      transition: transform 0.28s;
+      z-index: 999;
+      pointer-events: none;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>해시태그 연구소 🔬</h1>
+    <p class="subtitle">텍스트를 입력하면 AI가 최적의 해시태그를 추천해드려요</p>
+
+    <textarea
+      id="inputText"
+      placeholder="여기에 내용을 입력하세요&#10;예: 오늘 카페에서 맛있는 라떼를 마셨어요. 분위기도 너무 좋고 사진도 잘 나왔어요!"
+    ></textarea>
+    <p class="hint">💡 Cmd+Enter 로도 생성할 수 있어요</p>
+
+    <button class="btn-main" id="generateBtn" onclick="generate()">✨ 해시태그 생성하기</button>
+
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <div>AI가 해시태그를 생성하고 있어요…</div>
+    </div>
+
+    <div class="error" id="error"></div>
+
+    <div class="result" id="result">
+      <div class="result-header">
+        <div class="result-title">추천 해시태그 ✨</div>
+        <button class="btn-copy-all" onclick="copyAll()">📋 전체 복사</button>
+      </div>
+      <div class="tags" id="tags"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    async function generate() {
+      const text = document.getElementById('inputText').value.trim();
+      if (!text) { toast('텍스트를 입력해주세요!'); return; }
+
+      const btn = document.getElementById('generateBtn');
+      const loading = document.getElementById('loading');
+      const errEl = document.getElementById('error');
+      const result = document.getElementById('result');
+
+      btn.disabled = true;
+      loading.style.display = 'block';
+      errEl.style.display = 'none';
+      result.style.display = 'none';
+
+      try {
+        const res = await fetch('/api/generate-hashtags', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text }),
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        renderTags(data.hashtags);
+      } catch (e) {
+        errEl.textContent = '오류가 발생했어요: ' + e.message;
+        errEl.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        loading.style.display = 'none';
+      }
+    }
+
+    function renderTags(hashtags) {
+      const container = document.getElementById('tags');
+      container.innerHTML = hashtags.map(tag =>
+        `<div class="tag" onclick="copyTag(this,'${escapeAttr(tag)}')">${escapeHtml(tag)}</div>`
+      ).join('');
+      document.getElementById('result').style.display = 'block';
+    }
+
+    function copyTag(el, tag) {
+      navigator.clipboard.writeText(tag).then(() => {
+        el.classList.add('copied');
+        el.textContent = '✓ 복사됨';
+        setTimeout(() => {
+          el.classList.remove('copied');
+          el.textContent = tag;
+        }, 1500);
+        toast(tag + ' 복사됨!');
+      });
+    }
+
+    function copyAll() {
+      const tags = Array.from(document.querySelectorAll('.tag'))
+        .map(el => el.textContent.replace('✓ 복사됨', '').trim())
+        .join(' ');
+      navigator.clipboard.writeText(tags).then(() => toast('전체 해시태그가 복사되었어요!'));
+    }
+
+    function toast(msg) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.add('show');
+      setTimeout(() => el.classList.remove('show'), 2200);
+    }
+
+    function escapeHtml(s) {
+      return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+    function escapeAttr(s) {
+      return s.replace(/'/g,"\\'");
+    }
+
+    // Cmd+Enter 단축키
+    document.getElementById('inputText').addEventListener('keydown', e => {
+      if (e.key === 'Enter' && e.metaKey) generate();
+    });
+  </script>
+</body>
+</html>
