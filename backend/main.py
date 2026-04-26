@@ -30,7 +30,7 @@ app.add_middleware(
 _KOREAN_PATTERN = re.compile(r"[가-힣]")
 _HASHTAG_PATTERN = re.compile(r"#\w+")
 
-MAX_DAILY = 15
+MAX_DAILY = 20
 MAX_INPUT_LEN = 1000
 MIN_INTERVAL = 3.0
 GEMINI_MODELS = ["gemini-2.0-flash-lite", "gemini-2.0-flash", "gemini-1.5-flash"]
@@ -166,14 +166,10 @@ async def generate_hashtags(req: HashtagRequest, request: Request):
     if content is None:
         raise HTTPException(status_code=502, detail=f"AI 서비스 오류: {last_err}")
 
-    data = _load_rate()
-    remaining = MAX_DAILY - data.get("count", 0)
-
     return {
         "hashtags": _parse(content),
         "existing": existing,
         "has_korean": has_korean,
-        "remaining_today": remaining,
     }
 
 
