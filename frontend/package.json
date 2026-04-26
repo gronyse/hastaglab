@@ -1,0 +1,25 @@
+{
+  "name": "hastaglab",
+  "version": "1.0.5",
+  "main": "node_modules/expo/AppEntry.js",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo run:android",
+    "ios": "expo run:ios"
+  },
+  "dependencies": {
+    "expo": "~51.0.0",
+    "expo-status-bar": "~1.12.1",
+    "expo-image-picker": "~15.0.7",
+    "expo-clipboard": "~6.0.3",
+    "expo-haptics": "~13.0.1",
+    "react": "18.2.0",
+    "react-native": "0.74.5",
+    "react-native-confetti-cannon": "^1.5.2",
+    "i18next": "^23.11.5",
+    "react-i18next": "^14.1.2"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.24.0"
+  }
+}
