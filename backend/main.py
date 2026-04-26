@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import json
 import os
 import re
@@ -97,7 +98,6 @@ def _parse(content: str) -> list:
 
 
 async def _call_gemini(prompt: str, image_base64: str, image_type: str) -> str:
-    import base64
     for model_name in GEMINI_MODELS:
         try:
             model = genai.GenerativeModel(model_name)

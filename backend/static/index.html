@@ -267,13 +267,20 @@
 
     function renderTags(hashtags) {
       const container = document.getElementById('tags');
-      container.innerHTML = hashtags.map(tag =>
-        `<div class="tag" onclick="copyTag(this,'${escapeAttr(tag)}')">${escapeHtml(tag)}</div>`
-      ).join('');
+      container.innerHTML = '';
+      hashtags.forEach(tag => {
+        const div = document.createElement('div');
+        div.className = 'tag';
+        div.textContent = tag;
+        div.dataset.tag = tag;
+        div.addEventListener('click', () => copyTag(div));
+        container.appendChild(div);
+      });
       document.getElementById('result').style.display = 'block';
     }
 
-    function copyTag(el, tag) {
+    function copyTag(el) {
+      const tag = el.dataset.tag;
       navigator.clipboard.writeText(tag).then(() => {
         el.classList.add('copied');
         el.textContent = '✓ 복사됨';
@@ -284,8 +291,8 @@
 
     function copyAll() {
       const tags = Array.from(document.querySelectorAll('.tag'))
-        .map(el => el.dataset.tag || el.textContent.trim())
-        .filter(t => t.startsWith('#'))
+        .map(el => el.dataset.tag)
+        .filter(Boolean)
         .join(' ');
       navigator.clipboard.writeText(tags).then(() => toast('전체 해시태그가 복사되었어요!'));
     }
@@ -299,9 +306,6 @@
 
     function escapeHtml(s) {
       return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    }
-    function escapeAttr(s) {
-      return s.replace(/'/g,"\\'").replace(/"/g,'&quot;');
     }
 
     document.getElementById('inputText').addEventListener('keydown', e => {
