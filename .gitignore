@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+*.pyo
+backend/.env
+backend/venv/
+venv/
+.DS_Store
+backend/.rate_limit.json

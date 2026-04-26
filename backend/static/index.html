@@ -6,7 +6,6 @@
   <title>해시태그 연구소 🔬</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -16,7 +15,6 @@
       justify-content: center;
       padding: 20px;
     }
-
     .card {
       background: #fff;
       border-radius: 24px;
@@ -25,13 +23,13 @@
       width: 100%;
       box-shadow: 0 24px 64px rgba(0,0,0,0.18);
     }
-
     h1 { text-align: center; font-size: 1.9em; color: #333; }
-    .subtitle { text-align: center; color: #888; margin: 8px 0 28px; font-size: 0.95em; }
-
+    .subtitle { text-align: center; color: #888; margin: 8px 0 20px; font-size: 0.95em; }
+    .quota { text-align: center; font-size: 0.82em; color: #aaa; margin-bottom: 20px; }
+    .quota span { font-weight: bold; color: #667eea; }
     textarea {
       width: 100%;
-      height: 140px;
+      height: 120px;
       padding: 14px;
       border: 2px solid #e0e0e0;
       border-radius: 14px;
@@ -42,9 +40,38 @@
       transition: border-color 0.25s;
     }
     textarea:focus { border-color: #667eea; }
-
+    .img-section {
+      margin-top: 14px;
+      border: 2px dashed #d0d0f0;
+      border-radius: 14px;
+      padding: 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.25s, background 0.25s;
+      position: relative;
+    }
+    .img-section:hover { border-color: #667eea; background: #f9f9ff; }
+    .img-section input[type=file] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+    .img-section .img-label { color: #999; font-size: 0.9em; pointer-events: none; }
+    #imgPreview {
+      display: none;
+      max-width: 100%;
+      max-height: 200px;
+      border-radius: 10px;
+      margin-top: 10px;
+    }
+    .clear-img {
+      display: none;
+      margin-top: 8px;
+      background: none;
+      border: none;
+      color: #e53935;
+      cursor: pointer;
+      font-size: 0.85em;
+    }
     .hint { font-size: 0.8em; color: #aaa; margin-top: 6px; }
-
     .btn-main {
       width: 100%;
       padding: 15px;
@@ -61,14 +88,7 @@
     .btn-main:hover { opacity: 0.88; }
     .btn-main:active { transform: scale(0.98); }
     .btn-main:disabled { opacity: 0.55; cursor: not-allowed; }
-
-    /* 로딩 */
-    .loading {
-      display: none;
-      text-align: center;
-      padding: 22px 0;
-      color: #777;
-    }
+    .loading { display: none; text-align: center; padding: 22px 0; color: #777; }
     .spinner {
       display: inline-block;
       width: 32px; height: 32px;
@@ -79,8 +99,6 @@
       margin-bottom: 10px;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* 에러 */
     .error {
       display: none;
       color: #e53935;
@@ -90,17 +108,9 @@
       margin-top: 16px;
       text-align: center;
     }
-
-    /* 결과 */
     .result { display: none; margin-top: 28px; }
-    .result-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 14px;
-    }
+    .result-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
     .result-title { font-weight: bold; font-size: 1.05em; color: #333; }
-
     .btn-copy-all {
       padding: 7px 14px;
       background: #f3f3f3;
@@ -112,13 +122,7 @@
       transition: background 0.2s;
     }
     .btn-copy-all:hover { background: #e8e8e8; }
-
-    .tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
+    .tags { display: flex; flex-wrap: wrap; gap: 10px; }
     .tag {
       background: linear-gradient(135deg, #667eea18, #764ba218);
       border: 1.5px solid #667eea50;
@@ -130,14 +134,8 @@
       transition: all 0.2s;
       user-select: none;
     }
-    .tag:hover {
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      color: #fff;
-      border-color: transparent;
-    }
+    .tag:hover { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; border-color: transparent; }
     .tag.copied { background: #43a047; color: #fff; border-color: transparent; }
-
-    /* 토스트 알림 */
     .toast {
       position: fixed;
       bottom: 30px;
@@ -158,12 +156,18 @@
 <body>
   <div class="card">
     <h1>해시태그 연구소 🔬</h1>
-    <p class="subtitle">텍스트를 입력하면 AI가 최적의 해시태그를 추천해드려요</p>
+    <p class="subtitle">텍스트나 이미지로 AI가 최적의 해시태그를 추천해드려요</p>
+    <p class="quota">오늘 남은 횟수: <span id="remaining">-</span> / 15</p>
 
-    <textarea
-      id="inputText"
-      placeholder="여기에 내용을 입력하세요&#10;예: 오늘 카페에서 맛있는 라떼를 마셨어요. 분위기도 너무 좋고 사진도 잘 나왔어요!"
-    ></textarea>
+    <textarea id="inputText" placeholder="여기에 내용을 입력하세요 (선택)&#10;예: 오늘 카페에서 맛있는 라떼를 마셨어요!"></textarea>
+
+    <div class="img-section" id="imgSection">
+      <input type="file" id="imgFile" accept="image/*" onchange="onImageSelect(this)" />
+      <div class="img-label" id="imgLabel">📷 이미지 클릭 또는 드래그 (선택)</div>
+      <img id="imgPreview" alt="미리보기" />
+      <button class="clear-img" id="clearImg" onclick="clearImage(event)">✕ 이미지 제거</button>
+    </div>
+
     <p class="hint">💡 Cmd+Enter 로도 생성할 수 있어요</p>
 
     <button class="btn-main" id="generateBtn" onclick="generate()">✨ 해시태그 생성하기</button>
@@ -187,9 +191,48 @@
   <div class="toast" id="toast"></div>
 
   <script>
+    let imageBase64 = '';
+    let imageType = 'image/jpeg';
+
+    async function fetchRemaining() {
+      try {
+        const r = await fetch('/health');
+        const d = await r.json();
+        document.getElementById('remaining').textContent = d.remaining_today ?? '-';
+      } catch {}
+    }
+    fetchRemaining();
+
+    function onImageSelect(input) {
+      const file = input.files[0];
+      if (!file) return;
+      imageType = file.type || 'image/jpeg';
+      const reader = new FileReader();
+      reader.onload = e => {
+        const full = e.target.result;
+        imageBase64 = full.split(',')[1];
+        document.getElementById('imgPreview').src = full;
+        document.getElementById('imgPreview').style.display = 'block';
+        document.getElementById('imgLabel').style.display = 'none';
+        document.getElementById('clearImg').style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function clearImage(e) {
+      e.stopPropagation();
+      imageBase64 = '';
+      imageType = 'image/jpeg';
+      document.getElementById('imgFile').value = '';
+      document.getElementById('imgPreview').style.display = 'none';
+      document.getElementById('imgPreview').src = '';
+      document.getElementById('imgLabel').style.display = 'block';
+      document.getElementById('clearImg').style.display = 'none';
+    }
+
     async function generate() {
       const text = document.getElementById('inputText').value.trim();
-      if (!text) { toast('텍스트를 입력해주세요!'); return; }
+      if (!text && !imageBase64) { toast('텍스트 또는 이미지를 입력해주세요!'); return; }
 
       const btn = document.getElementById('generateBtn');
       const loading = document.getElementById('loading');
@@ -205,13 +248,16 @@
         const res = await fetch('/api/generate-hashtags', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text }),
+          body: JSON.stringify({ text, image_base64: imageBase64, image_type: imageType }),
         });
         const data = await res.json();
-        if (data.error) throw new Error(data.error);
+        if (!res.ok) throw new Error(data.detail || '오류가 발생했어요.');
+        if (data.remaining_today !== undefined) {
+          document.getElementById('remaining').textContent = data.remaining_today;
+        }
         renderTags(data.hashtags);
       } catch (e) {
-        errEl.textContent = '오류가 발생했어요: ' + e.message;
+        errEl.textContent = '오류: ' + e.message;
         errEl.style.display = 'block';
       } finally {
         btn.disabled = false;
@@ -231,17 +277,15 @@
       navigator.clipboard.writeText(tag).then(() => {
         el.classList.add('copied');
         el.textContent = '✓ 복사됨';
-        setTimeout(() => {
-          el.classList.remove('copied');
-          el.textContent = tag;
-        }, 1500);
+        setTimeout(() => { el.classList.remove('copied'); el.textContent = tag; }, 1500);
         toast(tag + ' 복사됨!');
       });
     }
 
     function copyAll() {
       const tags = Array.from(document.querySelectorAll('.tag'))
-        .map(el => el.textContent.replace('✓ 복사됨', '').trim())
+        .map(el => el.dataset.tag || el.textContent.trim())
+        .filter(t => t.startsWith('#'))
         .join(' ');
       navigator.clipboard.writeText(tags).then(() => toast('전체 해시태그가 복사되었어요!'));
     }
@@ -257,10 +301,9 @@
       return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     }
     function escapeAttr(s) {
-      return s.replace(/'/g,"\\'");
+      return s.replace(/'/g,"\\'").replace(/"/g,'&quot;');
     }
 
-    // Cmd+Enter 단축키
     document.getElementById('inputText').addEventListener('keydown', e => {
       if (e.key === 'Enter' && e.metaKey) generate();
     });
