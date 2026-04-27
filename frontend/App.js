@@ -54,7 +54,7 @@ i18n.use(initReactI18next).init({
 });
 
 const { width } = Dimensions.get('window');
-const TIMEOUT_MS = 30000;
+const TIMEOUT_MS = 60000; // 60초 (이미지+Pro 모델 대응)
 
 export default function App() {
   const { t } = useTranslation();
@@ -215,7 +215,7 @@ export default function App() {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      <ConfettiCannon count={80} origin={{ x: width / 2, y: -20 }} autoStart={false} ref={confettiRef} fadeOut={true} fallSpeed={2500} explosionSpeed={350} colors={['#007AFF', '#E1306C', '#03C75A', '#FFD700', '#FF6B6B']} />
+      <ConfettiCannon count={80} origin={{ x: width / 2, y: -20 }} autoStart={false} ref={confettiRef} fadeOut={true} fallSpeed={2500} explosionSpeed={350} colors={['#007AFF', '#E1306C', '#03C75A', '#FFD700']} />
     </View>
   );
 }

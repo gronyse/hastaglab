@@ -3,7 +3,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
-import os, re, json, base64
+import os, re, json
 from dotenv import load_dotenv
 from openai import OpenAI
 
@@ -32,15 +32,18 @@ class RequestBody(BaseModel):
     image: Optional[str] = None
     language: Optional[str] = "ko"
 
-SYSTEM_PROMPT_TEMPLATE = (
-    "You are a social media hashtag expert. Generate hashtags in {lang}. "
-    "Return ONLY valid JSON with these exact fields:\n"
-    '{"instagram": "#tag1 #tag2 #tag3 #tag4 #tag5", '
-    '"tiktok": "#tag1 #tag2 #tag3 #tag4 #tag5", '
-    '"blog": "#tag1 #tag2 #tag3 #tag4 #tag5", '
-    '"analysis": "한 줄 분석 코멘트"}'
-    "\nInstagram: 5 popular tags, TikTok: 5 trending tags, Blog: 5 SEO-friendly tags. No duplicates. Return JSON only, no markdown, no explanation."
-)
+def build_system_prompt(language: str) -> str:
+    lang_instruction = "한국어" if language == "ko" else "English"
+    analysis_example = "한 줄 분석 코멘트" if language == "ko" else "One-line analysis comment"
+    return (
+        f"You are a social media hashtag expert. Generate hashtags in {lang_instruction}. "
+        "Return ONLY valid JSON with these exact fields:\n"
+        f'{{"instagram": "#tag1 #tag2 #tag3 #tag4 #tag5", '
+        f'"tiktok": "#tag1 #tag2 #tag3 #tag4 #tag5", '
+        f'"blog": "#tag1 #tag2 #tag3 #tag4 #tag5", '
+        f'"analysis": "{analysis_example}"}}'
+        "\nInstagram: 5 popular tags, TikTok: 5 trending tags, Blog: 5 SEO-friendly tags. No duplicates. Return JSON only, no markdown, no explanation."
+    )
 
 @app.post("/generate")
 async def generate(body: RequestBody):
@@ -50,8 +53,7 @@ async def generate(body: RequestBody):
     if not keyword and not body.image:
         raise HTTPException(status_code=400, detail="keyword or image is required")
 
-    lang_instruction = "한국어" if language == "ko" else "English"
-    system_prompt = SYSTEM_PROMPT_TEMPLATE.format(lang=lang_instruction)
+    system_prompt = build_system_prompt(language)
 
     try:
         if body.image:
