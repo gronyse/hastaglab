@@ -10,8 +10,8 @@ import * as Haptics from 'expo-haptics';
 import i18n from 'i18next';
 import { initReactI18next, useTranslation } from 'react-i18next';
 
-// ✅ 배포 후 Railway URL로 교체하세요
-const API_BASE_URL = 'https://YOUR_RAILWAY_URL';
+// ✅ Railway 백엔드 URL
+const API_BASE_URL = 'https://hastaglab-production.up.railway.app';
 
 i18n.use(initReactI18next).init({
   compatibilityJSON: 'v3',
@@ -215,7 +215,7 @@ export default function App() {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      <ConfettiCannon count={80} origin={{ x: width / 2, y: -20 }} autoStart={false} ref={confettiRef} fadeOut={true} fallSpeed={2500} explosionSpeed={350} colors={['#007AFF', '#E1306C', '#03C75A', '#FFD700', '#FFFFFF']} />
+      <ConfettiCannon count={80} origin={{ x: width / 2, y: -20 }} autoStart={false} ref={confettiRef} fadeOut={true} fallSpeed={2500} explosionSpeed={350} colors={['#007AFF', '#E1306C', '#03C75A', '#FFD700', '#FF6B6B']} />
     </View>
   );
 }
