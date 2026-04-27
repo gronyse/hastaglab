@@ -5,14 +5,17 @@ from pydantic import BaseModel
 from typing import Optional
 import os, re, json, base64
 from dotenv import load_dotenv
-import google.generativeai as genai
+from openai import OpenAI
 
 load_dotenv()
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-if not GEMINI_API_KEY:
-    raise RuntimeError("GEMINI_API_KEY not found in environment")
+DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
+if not DEEPSEEK_API_KEY:
+    raise RuntimeError("DEEPSEEK_API_KEY not found in environment")
 
-genai.configure(api_key=GEMINI_API_KEY)
+client = OpenAI(
+    api_key=DEEPSEEK_API_KEY,
+    base_url="https://api.deepseek.com"
+)
 
 app = FastAPI(title="HashTag Generator Backend")
 
@@ -29,6 +32,16 @@ class RequestBody(BaseModel):
     image: Optional[str] = None
     language: Optional[str] = "ko"
 
+SYSTEM_PROMPT_TEMPLATE = (
+    "You are a social media hashtag expert. Generate hashtags in {lang}. "
+    "Return ONLY valid JSON with these exact fields:\n"
+    '{"instagram": "#tag1 #tag2 #tag3 #tag4 #tag5", '
+    '"tiktok": "#tag1 #tag2 #tag3 #tag4 #tag5", '
+    '"blog": "#tag1 #tag2 #tag3 #tag4 #tag5", '
+    '"analysis": "한 줄 분석 코멘트"}'
+    "\nInstagram: 5 popular tags, TikTok: 5 trending tags, Blog: 5 SEO-friendly tags. No duplicates. Return JSON only, no markdown, no explanation."
+)
+
 @app.post("/generate")
 async def generate(body: RequestBody):
     keyword = body.keyword.strip()[:200]
@@ -38,36 +51,39 @@ async def generate(body: RequestBody):
         raise HTTPException(status_code=400, detail="keyword or image is required")
 
     lang_instruction = "한국어" if language == "ko" else "English"
-
-    system_prompt = (
-        f"You are a social media hashtag expert. Generate hashtags in {lang_instruction}. "
-        "Return ONLY valid JSON with these exact fields:\n"
-        '{"instagram": "#tag1 #tag2 #tag3 #tag4 #tag5", '
-        '"tiktok": "#tag1 #tag2 #tag3 #tag4 #tag5", '
-        '"blog": "#tag1 #tag2 #tag3 #tag4 #tag5", '
-        '"analysis": "한 줄 분석 코멘트"}'
-        "\nInstagram: 5 popular tags, TikTok: 5 trending tags, Blog: 5 SEO-friendly tags. No duplicates. Return JSON only, no markdown, no explanation."
-    )
-
-    user_prompt = f"키워드: {keyword}" if keyword else "첨부된 이미지를 분석해서 해시태그를 생성해줘."
+    system_prompt = SYSTEM_PROMPT_TEMPLATE.format(lang=lang_instruction)
 
     try:
-        model = genai.GenerativeModel(
-            model_name="gemini-1.5-flash",
-            system_instruction=system_prompt
-        )
-
         if body.image:
-            image_data = base64.b64decode(body.image)
-            contents = [
-                {"mime_type": "image/jpeg", "data": image_data},
-                user_prompt
+            # 이미지 분석: deepseek-v4-pro (비전 모델)
+            image_data_url = f"data:image/jpeg;base64,{body.image}"
+            user_content = [
+                {"type": "image_url", "image_url": {"url": image_data_url}},
+                {"type": "text", "text": "첨부된 이미지를 분석해서 해시태그를 생성해줘."}
             ]
-            response = model.generate_content(contents)
-        else:
-            response = model.generate_content(user_prompt)
+            if keyword:
+                user_content.append({"type": "text", "text": f"추가 키워드: {keyword}"})
 
-        output_text = response.text
+            response = client.chat.completions.create(
+                model="deepseek-v4-pro",
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_content}
+                ],
+                max_tokens=512,
+            )
+        else:
+            # 텍스트만: deepseek-v4-flash (빠르고 저렴)
+            response = client.chat.completions.create(
+                model="deepseek-v4-flash",
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": f"키워드: {keyword}"}
+                ],
+                max_tokens=512,
+            )
+
+        output_text = response.choices[0].message.content
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"LLM error: {str(e)}")
