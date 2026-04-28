@@ -33,13 +33,12 @@ i18n.use(initReactI18next).init({
     en: {
       translation: {
         title: 'Hashtag Lab',
-        subtitle: 'Sharper tags for feeds, shorts, and search.',
-        addPhoto: 'Add photo',
+        addPhoto: 'Add a photo (Optional)',
         changePhoto: 'Change photo',
         clearPhoto: 'Remove photo',
         placeholder: 'Enter keywords (e.g. Seoul BBQ, dessert cafe)',
-        generating: 'Analyzing',
-        generateBtn: 'Generate Tags',
+        generating: 'AI is analyzing...',
+        generateBtn: 'Generate AI Tags',
         requireInput: 'Please add a photo or enter keywords.',
         copySuccess: 'Copied to clipboard.',
         copyBtn: 'Copy',
@@ -48,28 +47,27 @@ i18n.use(initReactI18next).init({
         timeoutError: 'Request timed out. Please try again.',
         serverError: 'Server error. Please try again later.',
         rateLimitError: 'Too many requests. Please wait a bit and try again.',
-        analysisTitle: 'AI Note',
+        adLabel: 'Ad',
       },
     },
     ko: {
       translation: {
         title: '해시태그 연구소',
-        subtitle: '인스타, 틱톡, 블로그에 맞는 태그를 정교하게 생성합니다.',
-        addPhoto: '사진 추가',
+        addPhoto: '사진 추가 (선택사항)',
         changePhoto: '사진 변경',
         clearPhoto: '사진 제거',
         placeholder: '키워드를 입력하세요 (예: 양지한우집, 양지갈비)',
-        generating: '분석 중',
-        generateBtn: '태그 생성하기',
+        generating: 'AI가 열심히 분석 중...',
+        generateBtn: 'AI 태그 생성하기',
         requireInput: '사진을 추가하거나 키워드를 입력해주세요.',
         copySuccess: '복사 완료',
-        copyBtn: '복사',
+        copyBtn: '복사하기',
         emptyResult: '생성된 태그가 없습니다.',
         networkError: '네트워크 오류입니다. 연결을 확인해주세요.',
         timeoutError: '요청 시간이 초과됐습니다. 다시 시도해주세요.',
         serverError: '서버 오류입니다. 잠시 후 다시 시도해주세요.',
         rateLimitError: '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.',
-        analysisTitle: 'AI 분석',
+        adLabel: '광고',
       },
     },
   },
@@ -88,24 +86,24 @@ export default function App() {
   const [loading, setLoading] = useState(false);
 
   const confettiRef = useRef(null);
-  const pulseAnim = useRef(new Animated.Value(0)).current;
+  const bounceAnim = useRef(new Animated.Value(0)).current;
   const scrollViewRef = useRef(null);
 
   useEffect(() => {
     if (!loading) {
-      pulseAnim.setValue(0);
+      bounceAnim.setValue(0);
       return;
     }
 
     const loop = Animated.loop(
       Animated.sequence([
-        Animated.timing(pulseAnim, { toValue: 1, duration: 520, useNativeDriver: true }),
-        Animated.timing(pulseAnim, { toValue: 0, duration: 520, useNativeDriver: true }),
+        Animated.timing(bounceAnim, { toValue: -8, duration: 300, useNativeDriver: true }),
+        Animated.timing(bounceAnim, { toValue: 0, duration: 300, useNativeDriver: true }),
       ])
     );
     loop.start();
     return () => loop.stop();
-  }, [loading, pulseAnim]);
+  }, [loading, bounceAnim]);
 
   const toggleLanguage = () => {
     const nextLang = currentLang === 'ko' ? 'en' : 'ko';
@@ -193,11 +191,6 @@ export default function App() {
     confettiRef.current?.start();
   };
 
-  const loadingScale = pulseAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [1, 1.08],
-  });
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.flex}>
@@ -208,75 +201,64 @@ export default function App() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.headerRow}>
-            <View style={styles.headerCopy}>
-              <Text style={styles.header}>{t('title')}</Text>
-              <Text style={styles.subtitle}>{t('subtitle')}</Text>
-            </View>
+            <Text style={styles.header}>{t('title')}</Text>
             <TouchableOpacity style={styles.langButton} onPress={toggleLanguage}>
-              <Text style={styles.langText}>{currentLang === 'ko' ? 'EN' : 'KR'}</Text>
+              <Text style={styles.langText}>{currentLang === 'ko' ? '🇺🇸 EN' : '🇰🇷 KR'}</Text>
             </TouchableOpacity>
           </View>
 
-          <View style={styles.inputPanel}>
-            <TouchableOpacity style={[styles.imageCard, image && styles.imageCardFilled]} onPress={pickImage}>
+          <View style={styles.imageWrap}>
+            <TouchableOpacity style={styles.imageCard} onPress={pickImage}>
               {image ? (
                 <>
                   <Image source={{ uri: image }} style={styles.fullImage} />
-                  <View style={styles.photoOverlay}>
-                    <Text style={styles.photoOverlayText}>{t('changePhoto')}</Text>
+                  <View style={styles.changePhotoBadge}>
+                    <Text style={styles.changePhotoText}>{t('changePhoto')}</Text>
                   </View>
                 </>
               ) : (
                 <View style={styles.placeholder}>
-                  <View style={styles.plusCircle}>
-                    <Text style={styles.plus}>+</Text>
-                  </View>
+                  <Text style={styles.plus}>+</Text>
                   <Text style={styles.hint}>{t('addPhoto')}</Text>
                 </View>
               )}
             </TouchableOpacity>
 
             {image && (
-              <TouchableOpacity
-                accessibilityLabel={t('clearPhoto')}
-                style={styles.clearImageButton}
-                onPress={clearImage}
-              >
+              <TouchableOpacity style={styles.clearImageButton} onPress={clearImage} accessibilityLabel={t('clearPhoto')}>
                 <Text style={styles.clearImageText}>×</Text>
               </TouchableOpacity>
             )}
-
-            <TextInput
-              style={styles.input}
-              placeholder={t('placeholder')}
-              placeholderTextColor="#777A83"
-              value={keyword}
-              onChangeText={setKeyword}
-              multiline={false}
-              returnKeyType="done"
-            />
-
-            <TouchableOpacity style={[styles.mainButton, loading && styles.mainButtonDisabled]} onPress={generateAll} disabled={loading}>
-              {loading ? (
-                <View style={styles.loadingContainer}>
-                  <Animated.View style={[styles.loadingDot, { transform: [{ scale: loadingScale }] }]} />
-                  <Text style={styles.buttonText}>{t('generating')}</Text>
-                </View>
-              ) : (
-                <Text style={styles.buttonText}>{t('generateBtn')}</Text>
-              )}
-            </TouchableOpacity>
           </View>
+
+          <TextInput
+            style={styles.input}
+            placeholder={t('placeholder')}
+            placeholderTextColor="#888"
+            value={keyword}
+            onChangeText={setKeyword}
+            multiline={false}
+            returnKeyType="done"
+          />
+
+          <TouchableOpacity style={[styles.mainButton, loading && styles.mainButtonLoading]} onPress={generateAll} disabled={loading}>
+            {loading ? (
+              <View style={styles.loadingContainer}>
+                <Animated.Text style={[styles.robotIcon, { transform: [{ translateY: bounceAnim }] }]}>🤖</Animated.Text>
+                <Text style={styles.buttonText}>{t('generating')}</Text>
+              </View>
+            ) : (
+              <Text style={styles.buttonText}>{t('generateBtn')}</Text>
+            )}
+          </TouchableOpacity>
+
+          <AdPlaceholder label={t('adLabel')} />
 
           {result && (
             <View style={styles.resultSection}>
-              <View style={styles.analysisBox}>
-                <Text style={styles.analysisTitle}>{t('analysisTitle')}</Text>
-                <Text style={styles.aiComment}>{result.analysis || '분석이 완료되었습니다.'}</Text>
-              </View>
-
+              <Text style={styles.aiComment}>{result.analysis || '분석이 완료되었습니다.'}</Text>
               <ResultCard title="Instagram" tags={result.instagram || t('emptyResult')} color="#E1306C" onCopy={handleCopy} copyText={t('copyBtn')} />
-              <ResultCard title="TikTok" tags={result.tiktok || t('emptyResult')} color="#111111" onCopy={handleCopy} copyText={t('copyBtn')} />
+              <ResultCard title="TikTok" tags={result.tiktok || t('emptyResult')} color="#050505" onCopy={handleCopy} copyText={t('copyBtn')} />
               <ResultCard title="Naver Blog" tags={result.blog || t('emptyResult')} color="#03C75A" onCopy={handleCopy} copyText={t('copyBtn')} />
             </View>
           )}
@@ -284,23 +266,28 @@ export default function App() {
       </KeyboardAvoidingView>
 
       <ConfettiCannon
-        count={70}
+        count={80}
         origin={{ x: width / 2, y: -20 }}
         autoStart={false}
         ref={confettiRef}
         fadeOut
-        fallSpeed={2400}
-        explosionSpeed={320}
-        colors={['#0A84FF', '#E1306C', '#03C75A', '#F5C542']}
+        fallSpeed={2500}
+        explosionSpeed={350}
+        colors={['#007AFF', '#E1306C', '#03C75A', '#FFD700']}
       />
     </SafeAreaView>
   );
 }
 
+const AdPlaceholder = ({ label }) => (
+  <View style={styles.adSlot}>
+    <Text style={styles.adText}>{label}</Text>
+  </View>
+);
+
 const ResultCard = ({ title, tags, color, onCopy, copyText }) => (
   <View style={styles.card}>
-    <View style={styles.cardHeader}>
-      <View style={[styles.cardMark, { backgroundColor: color }]} />
+    <View style={[styles.cardTag, { backgroundColor: color }]}>
       <Text style={styles.cardTitle}>{title}</Text>
     </View>
     <Text style={styles.tagsText}>{tags || ''}</Text>
@@ -311,43 +298,38 @@ const ResultCard = ({ title, tags, color, onCopy, copyText }) => (
 );
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#0D0E10' },
+  safeArea: { flex: 1, backgroundColor: '#121212' },
   flex: { flex: 1 },
   container: { flex: 1 },
-  content: { paddingHorizontal: 20, paddingTop: 22, paddingBottom: 56 },
-  headerRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 22 },
-  headerCopy: { flex: 1, paddingRight: 18 },
-  header: { color: '#F5F7FA', fontSize: 28, fontWeight: '900' },
-  subtitle: { color: '#8E949E', fontSize: 13, lineHeight: 19, marginTop: 6 },
-  langButton: { width: 48, height: 36, borderRadius: 18, backgroundColor: '#1A1D22', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#2A2E36' },
-  langText: { color: '#DDE4EE', fontSize: 13, fontWeight: '800' },
-  inputPanel: { position: 'relative', backgroundColor: '#15171B', borderRadius: 18, padding: 14, borderWidth: 1, borderColor: '#242832', marginBottom: 20 },
-  imageCard: { height: 184, backgroundColor: '#101216', borderRadius: 14, overflow: 'hidden', marginBottom: 14, borderWidth: 1, borderColor: '#2B303A', borderStyle: 'dashed' },
-  imageCardFilled: { borderStyle: 'solid', borderColor: '#2F3744' },
-  placeholder: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  plusCircle: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#202733', alignItems: 'center', justifyContent: 'center', marginBottom: 10 },
-  plus: { color: '#8AB4FF', fontSize: 28, fontWeight: '300', lineHeight: 32 },
-  hint: { color: '#A1A8B3', fontSize: 14, fontWeight: '700' },
+  content: { padding: 20, paddingTop: 34, paddingBottom: 60 },
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
+  header: { flex: 1, color: '#FFFFFF', fontSize: 30, fontWeight: '900', marginRight: 16 },
+  langButton: { backgroundColor: '#333333', paddingVertical: 8, paddingHorizontal: 14, borderRadius: 22 },
+  langText: { color: '#FFFFFF', fontWeight: '800', fontSize: 14 },
+  imageWrap: { position: 'relative', marginBottom: 20 },
+  imageCard: { width: '100%', height: 210, backgroundColor: '#1E1E1E', borderRadius: 20, overflow: 'hidden', borderStyle: 'dashed', borderWidth: 1.5, borderColor: '#3A3A3A' },
+  placeholder: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  plus: { fontSize: 48, color: '#007AFF', marginBottom: 14, fontWeight: '300' },
+  hint: { color: '#8E8E93', fontSize: 16, fontWeight: '700' },
   fullImage: { width: '100%', height: '100%', resizeMode: 'cover' },
-  photoOverlay: { position: 'absolute', left: 10, bottom: 10, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, backgroundColor: 'rgba(10, 12, 16, 0.72)' },
-  photoOverlayText: { color: '#F2F5F9', fontSize: 12, fontWeight: '800' },
-  clearImageButton: { position: 'absolute', right: 24, top: 24, width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(8, 10, 14, 0.86)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.16)' },
-  clearImageText: { color: '#FFFFFF', fontSize: 24, lineHeight: 27, fontWeight: '300' },
-  input: { minHeight: 54, backgroundColor: '#0F1115', color: '#F3F6FA', paddingHorizontal: 16, borderRadius: 12, fontSize: 16, borderWidth: 1, borderColor: '#252A33', marginBottom: 12 },
-  mainButton: { backgroundColor: '#0A84FF', minHeight: 56, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  mainButtonDisabled: { backgroundColor: '#355F95' },
+  changePhotoBadge: { position: 'absolute', left: 12, bottom: 12, backgroundColor: 'rgba(0,0,0,0.58)', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8 },
+  changePhotoText: { color: '#FFFFFF', fontSize: 12, fontWeight: '800' },
+  clearImageButton: { position: 'absolute', right: 12, top: 12, width: 34, height: 34, borderRadius: 17, backgroundColor: 'rgba(0,0,0,0.72)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.22)' },
+  clearImageText: { color: '#FFFFFF', fontSize: 25, lineHeight: 28, fontWeight: '300' },
+  input: { backgroundColor: '#1E1E1E', color: '#FFFFFF', minHeight: 58, paddingHorizontal: 16, borderRadius: 14, fontSize: 16, marginBottom: 16, borderBottomWidth: 2, borderBottomColor: '#007AFF' },
+  mainButton: { backgroundColor: '#007AFF', minHeight: 64, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginBottom: 14 },
+  mainButtonLoading: { backgroundColor: '#0A84FF' },
   loadingContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
-  loadingDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#FFFFFF', marginRight: 10 },
-  buttonText: { color: '#FFFFFF', fontWeight: '900', fontSize: 17 },
+  robotIcon: { fontSize: 28, marginRight: 12 },
+  buttonText: { color: '#FFFFFF', fontWeight: '900', fontSize: 19 },
+  adSlot: { height: 54, borderRadius: 12, borderWidth: 1, borderStyle: 'dashed', borderColor: '#333333', backgroundColor: '#171717', alignItems: 'center', justifyContent: 'center', marginBottom: 20 },
+  adText: { color: '#666666', fontSize: 12, fontWeight: '800', letterSpacing: 0 },
   resultSection: { marginTop: 2 },
-  analysisBox: { backgroundColor: '#15171B', borderRadius: 14, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: '#242832' },
-  analysisTitle: { color: '#8AB4FF', fontSize: 12, fontWeight: '900', marginBottom: 8 },
-  aiComment: { color: '#C9CED6', fontSize: 15, lineHeight: 23 },
-  card: { backgroundColor: '#181A1F', borderRadius: 14, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: '#242832' },
-  cardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
-  cardMark: { width: 8, height: 24, borderRadius: 4, marginRight: 10 },
-  cardTitle: { color: '#F4F6F9', fontWeight: '900', fontSize: 15 },
-  tagsText: { color: '#D7DBE2', fontSize: 16, lineHeight: 25 },
-  copyButton: { alignSelf: 'flex-end', marginTop: 14, backgroundColor: '#252932', paddingVertical: 9, paddingHorizontal: 18, borderRadius: 10, borderWidth: 1, borderColor: '#303642' },
-  copyButtonText: { color: '#F2F5F9', fontWeight: '800', fontSize: 13 },
+  aiComment: { color: '#A7A7A7', marginBottom: 16, fontStyle: 'italic', textAlign: 'center', fontSize: 16, lineHeight: 24 },
+  card: { backgroundColor: '#1E1E1E', borderRadius: 16, padding: 16, marginBottom: 16 },
+  cardTag: { alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, marginBottom: 14 },
+  cardTitle: { color: '#FFFFFF', fontWeight: '900', fontSize: 13 },
+  tagsText: { color: '#D0D0D0', fontSize: 16, lineHeight: 25 },
+  copyButton: { alignSelf: 'flex-end', marginTop: 16, backgroundColor: '#333333', paddingVertical: 10, paddingHorizontal: 18, borderRadius: 10 },
+  copyButtonText: { color: '#FFFFFF', fontWeight: '800', fontSize: 14 },
 });
