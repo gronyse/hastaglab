@@ -3,6 +3,7 @@ import {
   Alert,
   Animated,
   Dimensions,
+  Easing,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -73,7 +74,7 @@ i18n.use(initReactI18next).init({
   },
 });
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 const TIMEOUT_MS = 60000;
 
 export default function App() {
@@ -87,7 +88,9 @@ export default function App() {
 
   const confettiRef = useRef(null);
   const bounceAnim = useRef(new Animated.Value(0)).current;
+  const robotBurstAnim = useRef(new Animated.Value(0)).current;
   const scrollViewRef = useRef(null);
+  const [showRobotBurst, setShowRobotBurst] = useState(false);
 
   useEffect(() => {
     if (!loading) {
@@ -189,6 +192,51 @@ export default function App() {
     if (!tags) return;
     await Clipboard.setStringAsync(tags);
     confettiRef.current?.start();
+    setShowRobotBurst(true);
+    robotBurstAnim.stopAnimation();
+    robotBurstAnim.setValue(0);
+    Animated.timing(robotBurstAnim, {
+      toValue: 1,
+      duration: 1700,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start(() => {
+      setShowRobotBurst(false);
+      robotBurstAnim.setValue(0);
+    });
+  };
+
+  const robotBurstStyle = {
+    opacity: robotBurstAnim.interpolate({
+      inputRange: [0, 0.78, 1],
+      outputRange: [1, 1, 0],
+    }),
+    transform: [
+      {
+        translateX: robotBurstAnim.interpolate({
+          inputRange: [0, 0.25, 0.62, 1],
+          outputRange: [0, -36, 28, 12],
+        }),
+      },
+      {
+        translateY: robotBurstAnim.interpolate({
+          inputRange: [0, 0.22, 1],
+          outputRange: [0, -124, height * 0.72],
+        }),
+      },
+      {
+        rotate: robotBurstAnim.interpolate({
+          inputRange: [0, 0.25, 0.62, 1],
+          outputRange: ['0deg', '-18deg', '16deg', '42deg'],
+        }),
+      },
+      {
+        scale: robotBurstAnim.interpolate({
+          inputRange: [0, 0.2, 1],
+          outputRange: [0.72, 1.18, 0.96],
+        }),
+      },
+    ],
   };
 
   return (
@@ -275,6 +323,11 @@ export default function App() {
         explosionSpeed={350}
         colors={['#007AFF', '#E1306C', '#03C75A', '#FFD700']}
       />
+      {showRobotBurst && (
+        <Animated.Text pointerEvents="none" style={[styles.robotBurst, robotBurstStyle]}>
+          🤖
+        </Animated.Text>
+      )}
     </SafeAreaView>
   );
 }
@@ -332,4 +385,5 @@ const styles = StyleSheet.create({
   tagsText: { color: '#D0D0D0', fontSize: 16, lineHeight: 25 },
   copyButton: { alignSelf: 'flex-end', marginTop: 16, backgroundColor: '#333333', paddingVertical: 10, paddingHorizontal: 18, borderRadius: 10 },
   copyButtonText: { color: '#FFFFFF', fontWeight: '800', fontSize: 14 },
+  robotBurst: { position: 'absolute', left: width / 2 - 24, top: 88, fontSize: 42, zIndex: 20 },
 });
