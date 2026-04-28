@@ -10,8 +10,9 @@ import * as Haptics from 'expo-haptics';
 import i18n from 'i18next';
 import { initReactI18next, useTranslation } from 'react-i18next';
 
-// ✅ Railway 백엔드 URL
-const API_BASE_URL = 'https://hastaglab-production.up.railway.app';
+const API_BASE_URL = (
+  process.env.EXPO_PUBLIC_API_BASE_URL || 'https://hastaglab-production-eab7.up.railway.app'
+).replace(/\/$/, '');
 
 i18n.use(initReactI18next).init({
   compatibilityJSON: 'v3',
@@ -31,7 +32,8 @@ i18n.use(initReactI18next).init({
         emptyResult: "No tags generated.",
         networkError: "Network error. Please check your connection.",
         timeoutError: "Request timed out. Please try again.",
-        serverError: "Server error. Please try again later."
+        serverError: "Server error. Please try again later.",
+        rateLimitError: "Too many requests. Please wait a bit and try again."
       }
     },
     ko: {
@@ -47,7 +49,8 @@ i18n.use(initReactI18next).init({
         emptyResult: "생성된 태그가 없습니다.",
         networkError: "네트워크 오류입니다. 연결을 확인해주세요.",
         timeoutError: "요청 시간이 초과됐습니다. 다시 시도해주세요.",
-        serverError: "서버 오류입니다. 잠시 후 다시 시도해주세요."
+        serverError: "서버 오류입니다. 잠시 후 다시 시도해주세요.",
+        rateLimitError: "요청이 너무 많습니다. 잠시 후 다시 시도해주세요."
       }
     }
   }
@@ -143,6 +146,8 @@ export default function App() {
 
       if (e.name === 'AbortError') {
         Alert.alert('오류', t('timeoutError'));
+      } else if (e.message === 'HTTP_429') {
+        Alert.alert('오류', t('rateLimitError'));
       } else if (e.message?.startsWith('HTTP_5')) {
         Alert.alert('오류', t('serverError'));
       } else if (e.message?.startsWith('HTTP_')) {
