@@ -97,16 +97,33 @@ def build_prompts(keyword: str, language: str, has_image: bool):
     system_prompt = (
         f"You are a social media hashtag expert. Generate hashtags in {lang_instruction}. "
         "Return ONLY valid JSON with these exact fields:\n"
-        f'{{"instagram": "#tag1 #tag2 #tag3 #tag4 #tag5", '
-        f'"tiktok": "#tag1 #tag2 #tag3 #tag4 #tag5", '
-        f'"blog": "#tag1 #tag2 #tag3 #tag4 #tag5", '
+        f'{{"instagram": "#tag1 #tag2 #tag3 #tag4 #tag5 #tag6 #tag7 #tag8 #tag9 #tag10", '
+        f'"tiktok": "#tag1 #tag2 #tag3 #tag4 #tag5 #tag6 #tag7 #tag8 #tag9 #tag10", '
+        f'"blog": "#tag1 #tag2 #tag3 #tag4 #tag5 #tag6 #tag7 #tag8 #tag9 #tag10", '
         f'"analysis": "{analysis_example}"}}'
-        "\nInstagram: 5 popular tags, TikTok: 5 trending tags, Blog: 5 SEO-friendly tags. "
-        "No duplicates. Return JSON only, no markdown, no explanation."
+        "\nCreate 10 to 14 hashtags for each platform. Keep them useful, specific, and varied. "
+        "When keywords look like a restaurant, local shop, place, menu, product, or brand, infer likely intent and include: "
+        "exact keyword tags, spaced/combined Korean variants, menu or product tags, local discovery tags, review/search intent tags, and a few broad reach tags. "
+        "For restaurants, include cuisine, signature menu, dining occasion, neighborhood/city if inferable, reservation or review intent, and Korean food-content tags. "
+        "Instagram should balance brand/menu/local/lifestyle tags. TikTok should include short-form trend, mukbang, sound/visual, and viral discovery tags. "
+        "Blog should focus on SEO long-tail search phrases and local intent. "
+        "Do not invent delivery app names, reservation platforms, cities, neighborhoods, awards, prices, or business facts that are not present in the keyword or image. "
+        "Never add a city or district hashtag unless that city or district appears explicitly in the input or image. "
+        "If details are uncertain, use neutral discovery tags such as 맛집추천, 메뉴추천, 방문후기, 데이트맛집, 가족외식, or local-food tags. "
+        "Avoid weak generic-only outputs such as just #맛스타그램 or #food. No duplicates within or across platforms unless the exact keyword is essential. "
+        "Return JSON only, no markdown, no explanation."
     )
-    user_prompt = f"키워드: {keyword}" if keyword else "첨부된 이미지를 분석해서 해시태그를 생성해줘."
+    user_prompt = (
+        f"키워드: {keyword}\n"
+        "입력 키워드를 브랜드명/지역명/메뉴명/업종명으로 나누어 추론하고, 너무 짧거나 빈약하지 않게 플랫폼별 해시태그를 생성해줘."
+        if keyword
+        else "첨부된 이미지를 분석해서 핵심 피사체, 분위기, 장소/상품/음식 가능성을 추론하고 해시태그를 생성해줘."
+    )
     if has_image and keyword:
-        user_prompt = f"키워드: {keyword}\n첨부된 이미지도 같이 참고해서 해시태그를 생성해줘."
+        user_prompt = (
+            f"키워드: {keyword}\n"
+            "첨부된 이미지와 키워드를 함께 참고해 브랜드명/지역명/메뉴명/업종명을 추론하고 플랫폼별 해시태그를 생성해줘."
+        )
     return system_prompt, user_prompt
 
 
@@ -163,7 +180,7 @@ def generate_with_deepseek(system_prompt: str, user_prompt: str, image_base64: O
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_content},
             ],
-            max_tokens=700,
+            max_tokens=1200,
         )
     else:
         response = deepseek_client.chat.completions.create(
@@ -173,7 +190,7 @@ def generate_with_deepseek(system_prompt: str, user_prompt: str, image_base64: O
                 {"role": "user", "content": user_prompt},
             ],
             response_format={"type": "json_object"},
-            max_tokens=700,
+            max_tokens=1200,
             extra_body={"thinking": {"type": "disabled"}},
         )
 
@@ -188,7 +205,7 @@ def generate_with_gemini(system_prompt: str, user_prompt: str, image_base64: Opt
         system_instruction=system_prompt,
         response_mime_type="application/json",
         temperature=0.7,
-        max_output_tokens=700,
+        max_output_tokens=1200,
     )
 
     if image_base64:
