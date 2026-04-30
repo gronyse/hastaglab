@@ -2,6 +2,11 @@
 .env
 .env.*
 !.env.example
+*.jks
+*.keystore
+*.p12
+*.aab
+frontend/upload_certificate*.pem
 
 node_modules/
 dist/
