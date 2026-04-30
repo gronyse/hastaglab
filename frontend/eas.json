@@ -9,6 +9,9 @@
     },
     "preview": {
       "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "https://hastaglab-production-eab7.up.railway.app"
+      },
       "android": {
         "buildType": "apk"
       }

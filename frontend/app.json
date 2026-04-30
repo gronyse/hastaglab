@@ -34,6 +34,12 @@
           "photosPermission": "사진 라이브러리에서 이미지를 선택하기 위해 접근이 필요합니다."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "b54ce532-67b1-45d4-a576-44755cc536dd"
+      }
+    },
+    "owner": "gronyse"
   }
 }

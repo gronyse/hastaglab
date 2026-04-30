@@ -3,11 +3,20 @@
 .env.*
 !.env.example
 
+node_modules/
+dist/
+build/
+coverage/
+
 frontend/.expo/
 frontend/node_modules/
 
 __pycache__/
 *.py[cod]
+*.pyc
 .pytest_cache/
 .venv/
+venv/
 backend/.venv/
+
+.learnings/
