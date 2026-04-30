@@ -107,6 +107,7 @@ class RequestBody(BaseModel):
     keyword: str = ""
     image: Optional[str] = None
     language: Optional[str] = "ko"
+    client_id: Optional[str] = None
     styles: list[str] = Field(default_factory=list)
     variant: int = 0
     exclude_words: list[str] = Field(default_factory=list)
@@ -387,17 +388,23 @@ def check_rate_limit_redis(ip: str, has_image: bool):
     }
 
 
-def check_rate_limit(ip: str, has_image: bool):
+def rate_identity(ip: str, client_id: Optional[str]):
+    cleaned_client_id = re.sub(r"[^A-Za-z0-9._:-]", "", client_id or "")[:80]
+    return f"{ip}:{cleaned_client_id}" if cleaned_client_id else ip
+
+
+def check_rate_limit(ip: str, has_image: bool, client_id: Optional[str] = None):
+    identity = rate_identity(ip, client_id)
     if redis_client:
         try:
-            return check_rate_limit_redis(ip, has_image)
+            return check_rate_limit_redis(identity, has_image)
         except HTTPException:
             raise
         except Exception:
             pass
 
     now = time.time()
-    state = rate_state[ip]
+    state = rate_state[identity]
     trim_old_events(state["minute"], now, 60)
     trim_old_events(state["day"], now, 86400)
     trim_old_events(state["image_day"], now, 86400)
@@ -713,7 +720,7 @@ async def generate(body: RequestBody, request: Request):
     if not keyword and not body.image:
         raise HTTPException(status_code=400, detail="keyword or image is required")
 
-    quota = check_rate_limit(client_ip(request), bool(body.image))
+    quota = check_rate_limit(client_ip(request), bool(body.image), body.client_id)
 
     key = cache_key(body, keyword, language)
     cached = get_cached_response(key)

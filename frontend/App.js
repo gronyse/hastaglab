@@ -50,7 +50,6 @@ i18n.use(initReactI18next).init({
         timeoutError: 'Request timed out. Please try again.',
         serverError: 'Server error. Please try again later.',
         rateLimitError: 'Too many requests. Please wait a bit and try again.',
-        adLabel: 'Ad',
         stylesLabel: 'Style',
         reset: 'Reset',
         regenerate: 'Regenerate',
@@ -83,7 +82,6 @@ i18n.use(initReactI18next).init({
         timeoutError: '요청 시간이 초과됐습니다. 다시 시도해주세요.',
         serverError: '서버 오류입니다. 잠시 후 다시 시도해주세요.',
         rateLimitError: '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.',
-        adLabel: '광고',
         stylesLabel: '스타일',
         reset: '초기화',
         regenerate: '다시 생성',
@@ -109,6 +107,7 @@ const STORAGE_KEYS = {
   favorites: 'hastaglab.favorites',
   copyStats: 'hastaglab.copyStats',
   usage: 'hastaglab.usage',
+  clientId: 'hastaglab.clientId',
 };
 const STYLE_OPTIONS = [
   { key: 'trendy', ko: '트렌디', en: 'Trendy' },
@@ -138,6 +137,7 @@ export default function App() {
   const [recentHistory, setRecentHistory] = useState([]);
   const [favorites, setFavorites] = useState([]);
   const [copyStats, setCopyStats] = useState({ Instagram: 0, TikTok: 0, Blog: 0 });
+  const [clientId, setClientId] = useState('');
 
   const confettiRef = useRef(null);
   const bounceAnim = useRef(new Animated.Value(0)).current;
@@ -183,6 +183,23 @@ export default function App() {
       }
     };
     loadSavedData();
+  }, []);
+
+  useEffect(() => {
+    const loadClientId = async () => {
+      try {
+        const savedId = await AsyncStorage.getItem(STORAGE_KEYS.clientId);
+        if (savedId) {
+          setClientId(savedId);
+          return;
+        }
+        const newId = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
+        await AsyncStorage.setItem(STORAGE_KEYS.clientId, newId);
+        setClientId(newId);
+      } catch {
+      }
+    };
+    loadClientId();
   }, []);
 
   const toggleLanguage = () => {
@@ -322,6 +339,7 @@ export default function App() {
           keyword,
           image: base64Image || null,
           language: currentLang,
+          client_id: clientId,
           styles: selectedStyles,
           variant: nextVariant,
           exclude_words: excludeWords,
@@ -522,8 +540,6 @@ export default function App() {
             )}
           </TouchableOpacity>
 
-          <AdPlaceholder label={t('adLabel')} />
-
           {result && (
             <View style={styles.resultSection}>
               <View style={styles.resultActions}>
@@ -576,12 +592,6 @@ export default function App() {
     </SafeAreaView>
   );
 }
-
-const AdPlaceholder = ({ label }) => (
-  <View style={styles.adSlot}>
-    <Text style={styles.adText}>{label}</Text>
-  </View>
-);
 
 const ResultCard = ({ title, tags, color, platformName, onCopy, onFavorite, copyText, favoriteText }) => {
   const copyName = platformName || title;
@@ -689,8 +699,6 @@ const styles = StyleSheet.create({
   loadingContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
   robotIcon: { fontSize: 28, marginRight: 12 },
   buttonText: { color: '#FFFFFF', fontWeight: '900', fontSize: 19 },
-  adSlot: { height: 54, borderRadius: 12, borderWidth: 1, borderStyle: 'dashed', borderColor: '#333333', backgroundColor: '#171717', alignItems: 'center', justifyContent: 'center', marginBottom: 20 },
-  adText: { color: '#666666', fontSize: 12, fontWeight: '800', letterSpacing: 0 },
   resultSection: { marginTop: 2 },
   resultActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 8, marginBottom: 12 },
   secondaryButton: { backgroundColor: '#20242B', borderWidth: 1, borderColor: '#303844', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10 },
