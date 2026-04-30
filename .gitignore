@@ -6,6 +6,7 @@
 *.keystore
 *.p12
 *.aab
+frontend/credentials.json
 frontend/upload_certificate*.pem
 
 node_modules/
